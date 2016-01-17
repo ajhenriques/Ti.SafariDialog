@@ -69,19 +69,17 @@
 -(void)teardown
 {
     if(_sfController!=nil){
-        _sfController.delegate = nil;
+        [_sfController setDelegate:nil];
         _sfController = nil;
     }
     
     _isOpen = NO;
     
     if ([self _hasListeners:@"close"]){
-        NSDictionary *event = [NSDictionary dictionaryWithObjectsAndKeys:
-                               NUMINT(YES),@"success",
-                               [_url stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding],@"url",
-                               nil
-                               ];
-        [self fireEvent:@"close" withObject:event];
+        [self fireEvent:@"close" withObject:@{
+            @"success": NUMINT(YES),
+            @"url": [_url stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]
+        }];
     }
 }
 
@@ -93,8 +91,8 @@
 -(SFSafariViewController*)sfController:(NSString*)url withEntersReaderIfAvailable:(BOOL)entersReaderIfAvailable
 {
     if(_sfController == nil){
-        _sfController = [[SFSafariViewController alloc] initWithURL:[NSURL URLWithString:[url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] entersReaderIfAvailable:entersReaderIfAvailable];
-        _sfController.delegate = self;
+        _sfController = [[SFSafariViewController alloc] initWithURL:[NSURL URLWithString:[url stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] entersReaderIfAvailable:entersReaderIfAvailable];
+        [_sfController setDelegate:self];
     }
     
     return _sfController;
@@ -150,13 +148,12 @@
     SFSafariViewController* safari = [self sfController:_url withEntersReaderIfAvailable:entersReaderIfAvailable];
     
     if([args objectForKey:@"title"]){
-        safari.title = [TiUtils stringValue:@"title" properties:args];
+        [safari setTitle:[TiUtils stringValue:@"title" properties:args]];
     }
     
     if([args objectForKey:@"tintColor"]){
         TiColor *newColor = [TiUtils colorValue:@"tintColor" properties:args];
-        UIColor *clr = [newColor _color];
-        safari.view.tintColor = clr;
+        [[safari view] setTintColor:[newColor _color]];
     }
     
     [self retain];
